@@ -10,6 +10,7 @@ using System.Windows.Forms;
 
 namespace SimplePhotoShow
 {
+
     public partial class frmShow : Form
     {
 
@@ -19,6 +20,9 @@ namespace SimplePhotoShow
         public event EventHandler<EventPrev> PrevPic;
         public event EventHandler<EventStop> StopShow;
 
+        // WMP
+        //WMPLib.WindowsMediaPlayer _video;
+        
         public frmShow()
         {
             InitializeComponent();
@@ -48,12 +52,16 @@ namespace SimplePhotoShow
         {
             picShow.Size = this.Size;
             picShow.Location = new Point(0, 0);
+            wmp.Size = this.Size;
+            wmp.Location = new Point(0, 0);
         }
 
         private void frmShow_SizeChanged(object sender, EventArgs e)
         {
             picShow.Size = this.Size;
             picShow.Location = new Point(0, 0);
+            wmp.Size = this.Size;
+            wmp.Location = new Point(0, 0);
         }
 
         public void SetPicture(String FileName)
@@ -61,10 +69,29 @@ namespace SimplePhotoShow
             try
             {
                 if (picShow.Image != null)  picShow.Image.Dispose();
-                picShow.Image = (Image)new Bitmap(FileName);
-            } catch
+                if (FileName.ToLower().EndsWith(".avi") || FileName.ToLower().EndsWith(".mov") || FileName.ToLower().EndsWith(".mpg") || FileName.ToLower().EndsWith(".mpeg") || FileName.ToLower().EndsWith(".mp4"))
+                { // movie
+                    SetPause();
+                    wmp.URL = FileName;
+                    wmp.Visible = true;
+                    wmp.uiMode = "none";
+                    picShow.Visible = false;
+                    wmp.Ctlcontrols.play();
+                    while(wmp.playState != WMPLib.WMPPlayState.wmppsStopped) Application.DoEvents();
+                    wmp.Visible = false;
+                    ResetPause();
+                    GetNextPicture();
+                }
+                else
+                { // picture
+                    wmp.Visible = false;
+                    picShow.Image = (Image)new Bitmap(FileName);
+                    picShow.Visible = true;
+                }
+             }
+            catch (Exception ex)
             {
-
+                Console.WriteLine("Media exception: " + ex.ToString());
             }
 
         }
@@ -75,6 +102,18 @@ namespace SimplePhotoShow
             EventHandler<EventTogglePause> handler = TogglePause;
             if (handler != null) handler(null, arg);
             if (arg.Pause) lblState.Text = "Paused"; else lblState.Text = "";
+        }
+
+        private void wmp_ClickEvent(object sender, AxWMPLib._WMPOCXEvents_ClickEvent e)
+        {
+            if (wmp.playState == WMPLib.WMPPlayState.wmppsPlaying)
+            {
+                wmp.Ctlcontrols.pause();
+            }
+            else if (wmp.playState == WMPLib.WMPPlayState.wmppsPaused)
+            {
+                wmp.Ctlcontrols.play ();
+            }
         }
 
         private void frmShow_KeyUp(object sender, KeyEventArgs e)
@@ -88,20 +127,62 @@ namespace SimplePhotoShow
             if (e.KeyCode == Keys.PageDown || e.KeyCode == Keys.Down || e.KeyCode == Keys.Right)
             {
                 // Next Picture
-                EventNext arg = new SimplePhotoShow.EventNext();
-                EventHandler<EventNext> handler = NextPic;
-                if (handler != null) handler(null, arg);
-                SetPicture(arg.FileName);
+                GetNextPicture();
             }
             if (e.KeyCode == Keys.PageUp || e.KeyCode == Keys.Up || e.KeyCode == Keys.Left)
             {
                 // Previouse Picture
-                EventPrev arg = new SimplePhotoShow.EventPrev();
-                EventHandler<EventPrev> handler = PrevPic;
-                if (handler != null) handler(null, arg);
-                SetPicture(arg.FileName);
+                GetPreviousePicture();
             }
         }
+
+        private void GetPreviousePicture()
+        {
+            if (wmp.playState != WMPLib.WMPPlayState.wmppsStopped)
+            {
+                wmp.Ctlcontrols.stop();
+                wmp.Visible = false;
+            }
+            EventPrev arg = new SimplePhotoShow.EventPrev();
+            EventHandler<EventPrev> handler = PrevPic;
+            if (handler != null) handler(null, arg);
+            SetPicture(arg.FileName);
+        }
+
+        private void GetNextPicture()
+        {
+            if (wmp.playState != WMPLib.WMPPlayState.wmppsStopped)
+            {
+                wmp.Ctlcontrols.stop();
+                wmp.Visible = false;
+            }
+            EventNext arg = new SimplePhotoShow.EventNext();
+            EventHandler<EventNext> handler = NextPic;
+            if (handler != null) handler(null, arg);
+            SetPicture(arg.FileName);
+        }
+
+        private void SetPause()
+        {
+            EventTogglePause arg = new EventTogglePause();
+            EventHandler<EventTogglePause> handler = TogglePause;
+            if (handler != null) handler(null, arg);
+            if (!arg.Pause) handler(null, arg); // Currently running --> Set pause
+        }
+
+        private void ResetPause()
+        {
+            EventTogglePause arg = new EventTogglePause();
+            EventHandler<EventTogglePause> handler = TogglePause;
+            if (handler != null) handler(null, arg);
+            if (arg.Pause) handler(null, arg);  // Currently paused --> Set running
+        }
+
+        private void wmp_MediaError(object sender, AxWMPLib._WMPOCXEvents_MediaErrorEvent e)
+        {
+            GetNextPicture();
+        }
+
     } // form class
 
     public class EventTogglePause : EventArgs

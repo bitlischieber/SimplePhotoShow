@@ -9,6 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Serialization;
+using Microsoft.WindowsAPICodePack.Shell;
+using Microsoft.WindowsAPICodePack;
 
 namespace SimplePhotoShow
 {
@@ -112,6 +114,8 @@ namespace SimplePhotoShow
                     _photos.Add(photo);
                     lstFiles.Items.Add(photo.FileName);
                 }
+                lstFiles.SelectedItems.Clear();
+                lstFiles.SelectedIndex = lstFiles.Items.Count - 1;
                 Saved = false;
             }
         }
@@ -136,8 +140,20 @@ namespace SimplePhotoShow
         {
             if (lstFiles.SelectedIndex >= 0)
             {
+                String filename;
+
                 if (picCurr.Image != null) picCurr.Image.Dispose();
-                picCurr.Image = (Image)new Bitmap(_photos[lstFiles.SelectedIndex].Path);
+                filename = _photos[lstFiles.SelectedIndex].Path.ToLower();
+                if (filename.ToLower().EndsWith(".avi") || filename.ToLower().EndsWith(".mov") || filename.ToLower().EndsWith(".mpg") || filename.ToLower().EndsWith(".mpeg") || filename.ToLower().EndsWith(".mp4"))
+                {
+                    ShellFile shellFile = ShellFile.FromFilePath(_photos[lstFiles.SelectedIndex].Path);
+                    picCurr.Image = (Image)shellFile.Thumbnail.ExtraLargeBitmap;
+                }
+                else
+                {
+                    picCurr.Image = (Image)new Bitmap(_photos[lstFiles.SelectedIndex].Path);
+
+                }
                 // show prev/next
                 if (lstFiles.SelectedIndex == 0)
                 {
@@ -146,7 +162,16 @@ namespace SimplePhotoShow
                 else
                 {
                     if (picLast.Image != null) picLast.Image.Dispose();
-                    picLast.Image = (Image)new Bitmap(_photos[lstFiles.SelectedIndex - 1].Path);
+                    filename = _photos[lstFiles.SelectedIndex - 1].Path.ToLower();
+                    if (filename.ToLower().EndsWith(".avi") || filename.ToLower().EndsWith(".mov") || filename.ToLower().EndsWith(".mpg") || filename.ToLower().EndsWith(".mpeg") || filename.ToLower().EndsWith(".mp4"))
+                    {
+                        ShellFile shellFile = ShellFile.FromFilePath(_photos[lstFiles.SelectedIndex - 1].Path);
+                        picLast.Image = (Image)shellFile.Thumbnail.ExtraLargeBitmap;
+                    }
+                    else
+                    {
+                        picLast.Image = (Image)new Bitmap(_photos[lstFiles.SelectedIndex - 1].Path);
+                    }
                 } // if first image
                 if (lstFiles.SelectedIndex == _photos.Count - 1)
                 {
@@ -155,7 +180,16 @@ namespace SimplePhotoShow
                 else
                 {
                     if (picNext.Image != null) picNext.Image.Dispose();
-                    picNext.Image = (Image)new Bitmap(_photos[lstFiles.SelectedIndex + 1].Path);
+                    filename = _photos[lstFiles.SelectedIndex + 1].Path.ToLower();
+                    if (filename.ToLower().EndsWith(".avi") || filename.ToLower().EndsWith(".mov") || filename.ToLower().EndsWith(".mpg") || filename.ToLower().EndsWith(".mpeg") || filename.ToLower().EndsWith(".mp4"))
+                    {
+                        ShellFile shellFile = ShellFile.FromFilePath(_photos[lstFiles.SelectedIndex + 1].Path);
+                        picNext.Image = (Image)shellFile.Thumbnail.ExtraLargeBitmap;
+                    }
+                    else
+                    {
+                        picNext.Image = (Image)new Bitmap(_photos[lstFiles.SelectedIndex + 1].Path);
+                    }
                 } // if last image
                 // show full path in label
                 txtFullPath.Text = _photos[lstFiles.SelectedIndex].Path;
@@ -217,6 +251,8 @@ namespace SimplePhotoShow
             // Restore selection
             lstFiles.ClearSelected();
             lstFiles.SetSelected(newIndex, true);
+
+            Saved = false;
         }
 
         private void mnuOpen_Click(object sender, EventArgs e)
@@ -230,13 +266,15 @@ namespace SimplePhotoShow
             {
                 try
                 {
+                    // flush
+                    mnuNew_Click(null, null);
+                    // Load file content
                     StringReader stringReader = new StringReader(File.ReadAllText(filopen.FileName));
                     XmlSerializer serializer = new XmlSerializer(typeof(List<Photo>));
                     _photos = (List<Photo>)serializer.Deserialize(stringReader);
                     // remember file
                     _loadedFilename = filopen.FileName;
-                    // flush
-                    mnuNew_Click(null, null);
+                    this.Text = "Simple Photo Show - " + _loadedFilename;
                     // insert photos in to list
                     foreach (Photo photo in _photos)
                     {
@@ -257,31 +295,53 @@ namespace SimplePhotoShow
             filesave.RestoreDirectory = true;
             filesave.Title = "Save photo list...";
 
-            if ((filesave.ShowDialog() == DialogResult.OK) || (_loadedFilename != ""))
+            if (_loadedFilename == "")
             {
-                try
+                // Not saved until now -> Show dialog
+                if ((filesave.ShowDialog() == DialogResult.OK))
                 {
-                    _loadedFilename = filesave.FileName;
-                    StringWriter stringWriter = new StringWriter();
-                    XmlSerializer serializer = new XmlSerializer(typeof(List<Photo>));
-                    serializer.Serialize(stringWriter, _photos);
-                    File.WriteAllText(_loadedFilename, stringWriter.ToString());
-                    Saved = true;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("No valid SimplePhotoShow formated file!\n\n" + ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                } // file picker
-            } // filopen ok
+                    try
+                    {
+                        _loadedFilename = filesave.FileName;
+                        this.Text = "Simple Photo Show - " + _loadedFilename;
+                        StringWriter stringWriter = new StringWriter();
+                        XmlSerializer serializer = new XmlSerializer(typeof(List<Photo>));
+                        serializer.Serialize(stringWriter, _photos);
+                        File.WriteAllText(_loadedFilename, stringWriter.ToString());
+                        Saved = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("No valid SimplePhotoShow formated file!\n\n" + ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    } // file picker
+                } // filsave ok
+            } else
+            {
+                // Already saved once -> overwrite
+                StringWriter stringWriter = new StringWriter();
+                XmlSerializer serializer = new XmlSerializer(typeof(List<Photo>));
+                serializer.Serialize(stringWriter, _photos);
+                File.WriteAllText(_loadedFilename, stringWriter.ToString());
+                Saved = true;
+            }
         }
 
         private void mnuNew_Click(object sender, EventArgs e)
         {
+            if (Saved == false ) { 
+                DialogResult res = MessageBox.Show("There are unsaved changes.\nDo you want save the changes?", "Save?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                if (res == DialogResult.Cancel) return;
+                if (res == DialogResult.Yes) mnuSave_Click(null, null);
+            }
+
             picCurr.Image = null;
             picLast.Image = null;
             picNext.Image = null;
             txtFullPath.Text = "";
+            _photos.Clear();
             lstFiles.Items.Clear();
+            _loadedFilename = "";
+            this.Text = "Simple Photo Show";
             Saved = true;
         }
 
@@ -393,7 +453,18 @@ namespace SimplePhotoShow
         private void mnuSaveAs_Click(object sender, EventArgs e)
         {
             _loadedFilename = "";
+            this.Text = "Simple Photo Show";
             mnuSave_Click(null, null);
+        }
+
+        private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (Saved == false)
+            {
+                DialogResult res = MessageBox.Show("There are unsaved changes.\nDo you want save the changes?", "Save?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                if (res == DialogResult.Cancel) e.Cancel = true;
+                if (res == DialogResult.Yes) mnuSave_Click(null, null);
+            }
         }
     }
 }

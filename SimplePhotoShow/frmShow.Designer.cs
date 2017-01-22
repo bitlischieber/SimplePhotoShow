@@ -28,11 +28,12 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmShow));
             this.picShow = new System.Windows.Forms.PictureBox();
             this.lblState = new System.Windows.Forms.Label();
-            this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.wmp = new AxWMPLib.AxWindowsMediaPlayer();
             ((System.ComponentModel.ISupportInitialize)(this.picShow)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.wmp)).BeginInit();
             this.SuspendLayout();
             // 
             // picShow
@@ -60,6 +61,18 @@
             this.lblState.TabIndex = 1;
             this.lblState.Text = "label1";
             // 
+            // wmp
+            // 
+            this.wmp.Enabled = true;
+            this.wmp.Location = new System.Drawing.Point(31, 9);
+            this.wmp.Name = "wmp";
+            this.wmp.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("wmp.OcxState")));
+            this.wmp.Size = new System.Drawing.Size(163, 99);
+            this.wmp.TabIndex = 2;
+            this.wmp.Visible = false;
+            this.wmp.MediaError += new AxWMPLib._WMPOCXEvents_MediaErrorEventHandler(this.wmp_MediaError);
+            this.wmp.ClickEvent += new AxWMPLib._WMPOCXEvents_ClickEventHandler(this.wmp_ClickEvent);
+                        // 
             // frmShow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -67,6 +80,7 @@
             this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(284, 261);
             this.Controls.Add(this.lblState);
+            this.Controls.Add(this.wmp);
             this.Controls.Add(this.picShow);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "frmShow";
@@ -76,6 +90,7 @@
             this.SizeChanged += new System.EventHandler(this.frmShow_SizeChanged);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.frmShow_KeyUp);
             ((System.ComponentModel.ISupportInitialize)(this.picShow)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.wmp)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -85,6 +100,6 @@
 
         private System.Windows.Forms.PictureBox picShow;
         private System.Windows.Forms.Label lblState;
-        private System.Windows.Forms.Timer timer1;
+        private AxWMPLib.AxWindowsMediaPlayer wmp;
     }
 }
