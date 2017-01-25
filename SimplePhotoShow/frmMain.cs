@@ -466,5 +466,25 @@ namespace SimplePhotoShow
                 if (res == DialogResult.Yes) mnuSave_Click(null, null);
             }
         }
+
+        private void mnuCopy_Click(object sender, EventArgs e)
+        {
+            if (_photos.Count == 0)
+            {
+                MessageBox.Show("No images to copy.\nPlease add some images to the compilation and try again.", "Nothing to copy", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            frmRename dlgCopy = new frmRename();
+            dlgCopy.FormClosing += new FormClosingEventHandler(OnCopyClosing);
+            this.Enabled = false;
+            dlgCopy.SetPhoto(ref _photos);
+            dlgCopy.Show(this);
+            
+        }
+
+        private void OnCopyClosing(object sender, FormClosingEventArgs e)
+        {
+            this.Enabled = true;
+        }
     }
 }
