@@ -6,10 +6,10 @@
  - Plays videos using Windows Media Player
  - Can rename-copy a compilation to a different folder
  
-  Screenshot of main window:
+  Screenshot of main window:<br />
 ![alt tag](Main.JPG)
  
- Screenshor of rename-copy window:
+ Screenshor of rename-copy window:<br />
 ![alt tag](Rename.JPG)
  
 Compiled version for [download](SimplePhotoShow.zip)
