@@ -71,6 +71,7 @@ namespace SimplePhotoShow
                 if (picShow.Image != null)  picShow.Image.Dispose();
                 if (FileName.ToLower().EndsWith(".avi") || FileName.ToLower().EndsWith(".mov") || FileName.ToLower().EndsWith(".mpg") || FileName.ToLower().EndsWith(".mpeg") || FileName.ToLower().EndsWith(".mp4"))
                 { // movie
+                    bool pauseState = GetPause();
                     SetPause();
                     wmp.URL = FileName;
                     wmp.Visible = true;
@@ -79,7 +80,7 @@ namespace SimplePhotoShow
                     wmp.Ctlcontrols.play();
                     while(wmp.playState != WMPLib.WMPPlayState.wmppsStopped) Application.DoEvents();
                     wmp.Visible = false;
-                    ResetPause();
+                    if (pauseState) ResetPause();
                     GetNextPicture();
                 }
                 else
@@ -176,6 +177,14 @@ namespace SimplePhotoShow
             EventHandler<EventTogglePause> handler = TogglePause;
             if (handler != null) handler(null, arg);
             if (arg.Pause) handler(null, arg);  // Currently paused --> Set running
+        }
+
+        private bool GetPause()
+        {
+            EventTogglePause arg = new EventTogglePause();
+            EventHandler<EventTogglePause> handler = TogglePause;
+            if (handler != null) handler(null, arg);
+            return arg.Pause;
         }
 
         private void wmp_MediaError(object sender, AxWMPLib._WMPOCXEvents_MediaErrorEvent e)
