@@ -7,9 +7,9 @@
  - Can rename-copy a compilation to a different folder
  
   Screenshot of main window:
- [Main window](Main.JPG)
+![alt tag](Main.JPG)
  
  Screenshor of rename-copy window:
- [Rename and copy](Rename.JPG)
+![alt tag](Rename.JPG)
  
 Compiled version for [download](SimplePhotoShow.zip)
