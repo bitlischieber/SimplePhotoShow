@@ -72,7 +72,7 @@
             this.wmp.Visible = false;
             this.wmp.MediaError += new AxWMPLib._WMPOCXEvents_MediaErrorEventHandler(this.wmp_MediaError);
             this.wmp.ClickEvent += new AxWMPLib._WMPOCXEvents_ClickEventHandler(this.wmp_ClickEvent);
-                        // 
+            // 
             // frmShow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -83,6 +83,7 @@
             this.Controls.Add(this.wmp);
             this.Controls.Add(this.picShow);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "frmShow";
             this.Text = "SimplePhotoShow-Show";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;

@@ -51,6 +51,7 @@ namespace SimplePhotoShow
                 if (interval > 0 && interval < 6000)
                 {
                     _intervalSec = interval;
+                    tmrShow.Interval = interval;
                     mnuInteval.Text = "Set inter&val: " + interval.ToString() + " sec";
                 }
                 else
@@ -66,11 +67,19 @@ namespace SimplePhotoShow
             Screen[] screens = Screen.AllScreens;
             _showScreen = screens[0];
             _showScreenIdx = 0;
-            if (screens.Length > 1 && screens[0].Primary)
+            if (screens.Length > 1)
             {
-                _showScreen = screens[1];
-                _showScreenIdx = 1;
+                if (screens[0].Primary)
+                {
+                    _showScreen = screens[1];
+                    _showScreenIdx = 1;
+                }
             }
+            else
+            {
+                mnuShowScreen.Enabled = false;
+            }
+
             btnStop.Enabled = false;
         }
 
@@ -106,16 +115,21 @@ namespace SimplePhotoShow
             if (files != null)
             {
                 if (files.Length == 0) return; // No files, abort
-                // Add new files from external
+                // Get location to drop
+                Point point = lstFiles.PointToClient(new Point(e.X, e.Y));
+                int index = this.lstFiles.IndexFromPoint(point);
+                if (index < 0) index = lstFiles.Items.Count;    // empty area -> drop at the end
+                if (index == lstFiles.Items.Count - 1) index = lstFiles.Items.Count; // Droped over the last file -> drop at the end
+                
                 foreach (string fileName in files)
                 {
                     Photo photo = new Photo();
                     photo.Path = fileName;
-                    _photos.Add(photo);
-                    lstFiles.Items.Add(photo.FileName);
+                    _photos.Insert(index, photo);
+                    lstFiles.Items.Insert(index, photo.FileName);
                 }
                 lstFiles.SelectedItems.Clear();
-                lstFiles.SelectedIndex = lstFiles.Items.Count - 1;
+                lstFiles.SelectedIndex = index;
                 Saved = false;
             }
         }
@@ -252,6 +266,8 @@ namespace SimplePhotoShow
             lstFiles.ClearSelected();
             lstFiles.SetSelected(newIndex, true);
 
+            lstFiles.Refresh();
+
             Saved = false;
         }
 
@@ -355,20 +371,24 @@ namespace SimplePhotoShow
             if (lstFiles.Items.Count == 0)
             {
                 // Nothing to show
-                MessageBox.Show("No pictures to show. Please drop some files to the list.", "Nothing to show", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("No pictures to show.\nPlease drop some files to the list.", "Nothing to show", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             btnStop.Enabled = true;
             _showIndex = StartIndex;
-            _showForm = new frmShow();
-            _showForm.NextPic += _showForm_NextPic;
-            _showForm.PrevPic += _showForm_PrevPic;
-            _showForm.StopShow += _showForm_StopShow;
-            _showForm.TogglePause += _showForm_TogglePause;
-            _showForm.StartPosition = FormStartPosition.Manual;
-            _showForm.Left = _showScreen.WorkingArea.Left;
-            _showForm.Top = _showScreen.WorkingArea.Top;
-            _showForm.Show();
+            if (_showForm == null) _showForm = new frmShow();
+            if (_showForm.Visible == false) {
+                _showForm.NextPic += _showForm_NextPic;
+                _showForm.PrevPic += _showForm_PrevPic;
+                _showForm.StopShow += _showForm_StopShow;
+                _showForm.TogglePause += _showForm_TogglePause;
+                _showForm.StartPosition = FormStartPosition.Manual;
+                _showForm.WindowState = FormWindowState.Normal;
+                _showForm.Left = _showScreen.WorkingArea.Left;
+                _showForm.Top = _showScreen.WorkingArea.Top;
+                _showForm.WindowState = FormWindowState.Maximized;
+                _showForm.Show(this);
+            }
             if (mnuTimer.Checked)
             {
                 tmrShow.Interval = _intervalSec * 1000;
@@ -486,5 +506,11 @@ namespace SimplePhotoShow
         {
             this.Enabled = true;
         }
-    }
+
+        private void mnuTimer_Click(object sender, EventArgs e)
+        {
+            tmrShow.Enabled = mnuTimer.Checked;
+        }
+
+   }
 }
